@@ -4,15 +4,9 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-import servent.message.AskGetMessage;
-import servent.message.PutMessage;
-import servent.message.WelcomeMessage;
+import servent.message.*;
 import servent.message.util.MessageUtil;
 
 /**
@@ -54,7 +48,12 @@ public class ChordState {
 	private List<ServentInfo> allNodeInfo;
 	
 	private Map<Integer, Integer> valueMap;
-	
+
+	private Set<String> uploadedFiles = Collections.synchronizedSet(new HashSet<>());
+	private Set<Integer> pendingRequests = Collections.synchronizedSet(new HashSet<>());
+	private Set<Integer> followers = Collections.synchronizedSet(new HashSet<>());
+	private volatile boolean publicProfile = false;
+
 	public ChordState() {
 		this.chordLevel = 1;
 		int tmp = CHORD_SIZE;
@@ -311,14 +310,8 @@ public class ChordState {
 	/**
 	 * The Chord put operation. Stores locally if key is ours, otherwise sends it on.
 	 */
-	public void putValue(int key, int value) {
-		if (isKeyMine(key)) {
-			valueMap.put(key, value);
-		} else {
-			ServentInfo nextNode = getNextNodeForKey(key);
-			PutMessage pm = new PutMessage(AppConfig.myServentInfo.getListenerPort(), nextNode.getListenerPort(), key, value);
-			MessageUtil.sendMessage(pm);
-		}
+	public void putValue(String value) {
+		uploadedFiles.add(value);
 	}
 	
 	/**
@@ -345,4 +338,52 @@ public class ChordState {
 		return -2;
 	}
 
+	public void solveFileRequest(int requester){
+		Message m = null;
+		ServentInfo reciever = getNextNodeForKey(chordHash(requester));
+		if(!publicProfile && !followers.contains(requester)) {
+			m = new FileListResultMessage(AppConfig.myServentInfo.getListenerPort(), reciever.getListenerPort(), (Set<String>) null, requester);
+		}
+		else{
+			m = new FileListResultMessage(AppConfig.myServentInfo.getListenerPort(), reciever.getListenerPort(), uploadedFiles, requester);
+		}
+		MessageUtil.sendMessage(m);
+	}
+
+	//add follow request to collection
+	public void getFollowRequest(int requester){
+		pendingRequests.add(requester);
+	}
+
+	public Set<Integer> getFollowers() {
+		return followers;
+	}
+
+	public void setFollowers(Set<Integer> followers) {
+		this.followers = followers;
+	}
+
+	public Set<Integer> getPendingRequests() {
+		return pendingRequests;
+	}
+
+	public void setPendingRequests(Set<Integer> pendingRequests) {
+		this.pendingRequests = pendingRequests;
+	}
+
+	public Set<String> getUploadedFiles() {
+		return uploadedFiles;
+	}
+
+	public void setUploadedFiles(Set<String> uploadedFiles) {
+		this.uploadedFiles = uploadedFiles;
+	}
+
+	public boolean isPublicProfile() {
+		return publicProfile;
+	}
+
+	public void setPublicProfile(boolean publicProfile) {
+		this.publicProfile = publicProfile;
+	}
 }

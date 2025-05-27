@@ -21,6 +21,7 @@ public class StopCommand implements CLICommand {
 
 	@Override
 	public void execute(String args) {
+		//TODO get node out of the system
 		AppConfig.timestampedStandardPrint("Stopping...");
 		parser.stop();
 		listener.stop();
