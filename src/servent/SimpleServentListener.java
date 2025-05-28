@@ -85,11 +85,33 @@ public class SimpleServentListener implements Runnable, Cancellable {
 						break;
 					case LIST_RESULT:
 						messageHandler = new FilesResultMessageHandler(clientMessage);
+						break;
+					case PRIVILEGE:
+						messageHandler = new PrivilegeMessageHandler(clientMessage);
+						break;
+					case REQUEST_PRIVILEGE:
+						messageHandler = new RequestPrivilegeMessageHandler(clientMessage);
+						break;
+					case REORGANIZED:
+						messageHandler = new ReorganizedMessageHandler(clientMessage);
+						break;
 					case POISON:
 						break;
 					}
-				
-				threadPool.submit(messageHandler);
+
+				final var fuckJava = messageHandler;
+				threadPool.submit(() -> {
+					try {
+						fuckJava.run();
+					} catch (Throwable t) {
+						AppConfig.timestampedErrorPrint(
+								"unhandled exception by %s".formatted(
+										fuckJava.getClass()
+								)
+						);
+						t.printStackTrace();
+					}
+				});
 			} catch (SocketTimeoutException timeoutEx) {
 				//Uncomment the next line to see that we are waking up every second.
 //				AppConfig.timedStandardPrint("Waiting...");

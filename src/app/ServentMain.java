@@ -16,7 +16,12 @@ public class ServentMain {
 	 * 1 - this servent's id
 	 */
 	public static void main(String[] args) {
-		if (args.length != 2) {
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        if (args.length != 2) {
 			AppConfig.timestampedErrorPrint("Please provide servent list file and id of this servent.");
 		}
 		

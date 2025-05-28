@@ -26,8 +26,14 @@ public class NewNodeHandler implements MessageHandler {
 		if (clientMessage.getMessageType() == MessageType.NEW_NODE) {
 			int newNodePort = clientMessage.getSenderPort();
 			ServentInfo newNodeInfo = new ServentInfo("localhost", newNodePort);
-			
-			//check if the new node collides with another existing node.
+
+            try {
+                AppConfig.suzukiKasamiMutex.lock();
+            } catch (InterruptedException e) {
+                AppConfig.timestampedStandardPrint("Usro se i umro");
+            }
+
+            //check if the new node collides with another existing node.
 			if (AppConfig.chordState.isCollision(newNodeInfo.getChordId())) {
 				Message sry = new SorryMessage(AppConfig.myServentInfo.getListenerPort(), clientMessage.getSenderPort());
 				MessageUtil.sendMessage(sry);
@@ -92,6 +98,7 @@ public class NewNodeHandler implements MessageHandler {
 				ServentInfo nextNode = AppConfig.chordState.getNextNodeForKey(newNodeInfo.getChordId());
 				NewNodeMessage nnm = new NewNodeMessage(newNodePort, nextNode.getListenerPort());
 				MessageUtil.sendMessage(nnm);
+				AppConfig.suzukiKasamiMutex.unlock();
 			}
 			
 		} else {

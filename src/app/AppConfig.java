@@ -1,5 +1,7 @@
 package app;
 
+import servent.SuzukiKasamiMutex;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -47,6 +49,8 @@ public class AppConfig {
 	public static int SERVENT_COUNT;
 	
 	public static ChordState chordState;
+
+	public static SuzukiKasamiMutex suzukiKasamiMutex;
 	
 	/**
 	 * Reads a config file. Should be called once at start of app.

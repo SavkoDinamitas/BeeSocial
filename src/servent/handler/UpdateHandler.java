@@ -5,6 +5,7 @@ import java.util.List;
 
 import app.AppConfig;
 import app.ServentInfo;
+import servent.message.FinishedReorganizationMessage;
 import servent.message.Message;
 import servent.message.MessageType;
 import servent.message.UpdateMessage;
@@ -45,6 +46,8 @@ public class UpdateHandler implements MessageHandler {
 					allNodes.add(new ServentInfo("localhost", Integer.parseInt(port)));
 				}
 				AppConfig.chordState.addNodes(allNodes);
+				Message m = new FinishedReorganizationMessage(AppConfig.myServentInfo.getListenerPort(), AppConfig.chordState.getNextNodePort());
+				MessageUtil.sendMessage(m);
 			}
 		} else {
 			AppConfig.timestampedErrorPrint("Update message handler got message that is not UPDATE");
