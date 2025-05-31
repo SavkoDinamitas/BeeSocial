@@ -1,10 +1,7 @@
 package servent.handler;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import app.AppConfig;
 import app.ServentInfo;
@@ -63,26 +60,26 @@ public class NewNodeHandler implements MessageHandler {
 					if (hisPredId == myId) { //i am first and he is second
 						if (myId < newNodeId) {
 							if (valueEntry.getKey() <= newNodeId && valueEntry.getKey() > myId) {
-								hisValues.put(valueEntry.getKey(), Collections.synchronizedSet(valueEntry.getValue()));
+								hisValues.put(valueEntry.getKey(), Collections.synchronizedSet(new HashSet<>(valueEntry.getValue())));
 							}
 						} else {
 							if (valueEntry.getKey() <= newNodeId || valueEntry.getKey() > myId) {
-								hisValues.put(valueEntry.getKey(), Collections.synchronizedSet(valueEntry.getValue()));
+								hisValues.put(valueEntry.getKey(), Collections.synchronizedSet(new HashSet<>(valueEntry.getValue())));
 							}
 						}
 					}
 					if (hisPredId < myId) { //my old predecesor was before me
 						if (valueEntry.getKey() <= newNodeId) {
-							hisValues.put(valueEntry.getKey(), Collections.synchronizedSet(valueEntry.getValue()));
+							hisValues.put(valueEntry.getKey(), Collections.synchronizedSet(new HashSet<>(valueEntry.getValue())));
 						}
-					} else { //my old predecesor was after me
+					} else { //my old predecessor was after me
 						if (hisPredId > newNodeId) { //new node overflow
 							if (valueEntry.getKey() <= newNodeId || valueEntry.getKey() > hisPredId) {
-								hisValues.put(valueEntry.getKey(), Collections.synchronizedSet(valueEntry.getValue()));
+								hisValues.put(valueEntry.getKey(), Collections.synchronizedSet(new HashSet<>(valueEntry.getValue())));
 							}
 						} else { //no new node overflow
 							if (valueEntry.getKey() <= newNodeId && valueEntry.getKey() > hisPredId) {
-								hisValues.put(valueEntry.getKey(), Collections.synchronizedSet(valueEntry.getValue()));
+								hisValues.put(valueEntry.getKey(), Collections.synchronizedSet(new HashSet<>(valueEntry.getValue())));
 							}
 						}
 						

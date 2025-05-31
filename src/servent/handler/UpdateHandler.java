@@ -34,6 +34,7 @@ public class UpdateHandler implements MessageHandler {
 				} else {
 					newMessageText = clientMessage.getMessageText() + "," + AppConfig.myServentInfo.getListenerPort();
 				}
+				AppConfig.chordState.resetChanges(newNodInfo.getListenerPort());
 				Message nextUpdate = new UpdateMessage(clientMessage.getSenderPort(), AppConfig.chordState.getNextNodePort(),
 						newMessageText);
 				MessageUtil.sendMessage(nextUpdate);
@@ -46,6 +47,7 @@ public class UpdateHandler implements MessageHandler {
 					allNodes.add(new ServentInfo("localhost", Integer.parseInt(port)));
 				}
 				AppConfig.chordState.addNodes(allNodes);
+				AppConfig.chordState.resetChanges(clientMessage.getSenderPort());
 				Message m = new FinishedReorganizationMessage(AppConfig.myServentInfo.getListenerPort(), AppConfig.chordState.getNextNodePort());
 				MessageUtil.sendMessage(m);
 			}

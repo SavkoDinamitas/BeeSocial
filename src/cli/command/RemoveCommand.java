@@ -1,6 +1,9 @@
 package cli.command;
 
 import app.AppConfig;
+import servent.message.Message;
+import servent.message.ReplicateMessage;
+import servent.message.util.MessageUtil;
 
 public class RemoveCommand implements CLICommand{
     @Override
@@ -15,6 +18,10 @@ public class RemoveCommand implements CLICommand{
         }
         else{
             AppConfig.chordState.getUploadedFiles().remove(args);
+            Message m = new ReplicateMessage(AppConfig.myServentInfo.getListenerPort(), AppConfig.chordState.getNextNodePort(), AppConfig.chordState.getUploadedFiles(),
+                    false, AppConfig.chordState.getChangeId());
+            AppConfig.chordState.incrementChangeId();
+            MessageUtil.sendMessage(m);
         }
     }
 }

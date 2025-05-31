@@ -54,6 +54,8 @@ public class ChordState {
 	private Set<Integer> pendingRequests = Collections.synchronizedSet(new HashSet<>());
 	private Set<Integer> followers = Collections.synchronizedSet(new HashSet<>());
 	private volatile boolean publicProfile = false;
+	private int changeId = 0;
+	private Map<Integer, Integer> nodeReplicasChanges = new ConcurrentHashMap<>();
 
 	public ChordState() {
 		this.chordLevel = 1;
@@ -390,5 +392,28 @@ public class ChordState {
 
 	public void setPublicProfile(boolean publicProfile) {
 		this.publicProfile = publicProfile;
+	}
+
+	public int getChangeId() {
+		return changeId;
+	}
+
+	public void incrementChangeId(){
+		changeId++;
+	}
+
+	public void resetChanges(Integer key){
+		nodeReplicasChanges.put(key, 0);
+	}
+
+	public void updateReplicaForNode(Integer key, Set<String> files, Integer changeId){
+		if(changeId > nodeReplicasChanges.getOrDefault(key, 0)){
+			uploadedFiles.put(key, files);
+			nodeReplicasChanges.put(key, changeId);
+		}
+	}
+
+	public Map<Integer, Set<String>> getAllFilesStored(){
+		return uploadedFiles;
 	}
 }
