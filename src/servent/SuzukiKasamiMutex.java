@@ -46,7 +46,7 @@ public class SuzukiKasamiMutex {
 
     public synchronized void handleRequest(RequestPrivilegeMessage message){
         rn.put(message.getSenderPort(), Math.max(rn.getOrDefault(message.getSenderPort(), -1), message.getRequestNumber()));
-        if(havePrivilege && !requesting && rn.get(message.getSenderPort()) == ln.getOrDefault(message.getSenderPort(), -1) + 1){
+        if(havePrivilege && !requesting && !inCriticalSection && rn.get(message.getSenderPort()) == ln.getOrDefault(message.getSenderPort(), -1) + 1){
             havePrivilege = false;
             ServentInfo reciever = AppConfig.chordState.getNextNodeForKey(ChordState.chordHash(message.getSenderPort()));
             Message m = new PrivilegeMessage(AppConfig.myServentInfo.getListenerPort(), reciever.getListenerPort(), new ArrayDeque<>(queue), new HashMap<>(ln), message.getSenderPort());

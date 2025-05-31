@@ -1,6 +1,7 @@
 package servent.handler;
 
 import app.AppConfig;
+import app.ChordState;
 import app.ServentInfo;
 import servent.message.Message;
 import servent.message.PrivilegeMessage;
@@ -19,7 +20,7 @@ public class PrivilegeMessageHandler implements MessageHandler{
             AppConfig.suzukiKasamiMutex.handleRecievePrivilege(message);
         }
         else{
-            ServentInfo receiver = AppConfig.chordState.getNextNodeForKey(message.getPrivilegeReciever());
+            ServentInfo receiver = AppConfig.chordState.getNextNodeForKey(ChordState.chordHash(message.getPrivilegeReciever()));
             Message m = new PrivilegeMessage(message.getSenderPort(), receiver.getListenerPort(), message.getQueue(), message.getLn(), message.getPrivilegeReciever());
             MessageUtil.sendMessage(m);
         }

@@ -16,6 +16,10 @@ public class ListFilesCommand implements CLICommand{
     @Override
     public void execute(String args) {
         if(Integer.parseInt(args) == AppConfig.myServentInfo.getListenerPort()){
+            if(AppConfig.chordState.getUploadedFiles() == null){
+                AppConfig.timestampedStandardPrint("There is no uploaded files on this node!");
+                return;
+            }
             AppConfig.timestampedStandardPrint("Uploaded files for user: ");
             for(var x : AppConfig.chordState.getUploadedFiles()){
                 AppConfig.timestampedStandardPrint("\t" + x);

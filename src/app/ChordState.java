@@ -5,6 +5,7 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 import servent.message.*;
 import servent.message.util.MessageUtil;
@@ -48,8 +49,8 @@ public class ChordState {
 	private List<ServentInfo> allNodeInfo;
 	
 	private Map<Integer, Integer> valueMap;
-
-	private Set<String> uploadedFiles = Collections.synchronizedSet(new HashSet<>());
+	//map of uploaded files, including the backups
+	private Map<Integer, Set<String>> uploadedFiles = new ConcurrentHashMap<>();
 	private Set<Integer> pendingRequests = Collections.synchronizedSet(new HashSet<>());
 	private Set<Integer> followers = Collections.synchronizedSet(new HashSet<>());
 	private volatile boolean publicProfile = false;
@@ -83,7 +84,7 @@ public class ChordState {
 	public void init(WelcomeMessage welcomeMsg) {
 		//set a temporary pointer to next node, for sending of update message
 		successorTable[0] = new ServentInfo("localhost", welcomeMsg.getSenderPort());
-		this.valueMap = welcomeMsg.getValues();
+		this.uploadedFiles = welcomeMsg.getValues();
 		
 		//tell bootstrap this node is not a collider
 		try {
@@ -121,8 +122,8 @@ public class ChordState {
 		this.predecessorInfo = newNodeInfo;
 	}
 
-	public Map<Integer, Integer> getValueMap() {
-		return valueMap;
+	public Map<Integer, Set<String>> getValueMap() {
+		return uploadedFiles;
 	}
 	
 	public void setValueMap(Map<Integer, Integer> valueMap) {
@@ -307,11 +308,17 @@ public class ChordState {
 		updateSuccessorTable();
 	}
 
+	private Set<String> makeSetWithInitialValue(String value){
+		Set<String> set = ConcurrentHashMap.newKeySet();
+		set.add(value);
+		return set;
+	}
+
 	/**
 	 * The Chord put operation. Stores locally if key is ours, otherwise sends it on.
 	 */
-	public void putValue(String value) {
-		uploadedFiles.add(value);
+	public void putValue(Integer key, String value) {
+		uploadedFiles.merge(key, makeSetWithInitialValue(value), (set, x) -> {set.add(value); return set;});
 	}
 	
 	/**
@@ -338,14 +345,15 @@ public class ChordState {
 		return -2;
 	}
 
-	public void solveFileRequest(int requester){
+	public void solveFileRequest(int key, int requester){
 		Message m = null;
 		ServentInfo reciever = getNextNodeForKey(chordHash(requester));
 		if(!publicProfile && !followers.contains(requester)) {
 			m = new FileListResultMessage(AppConfig.myServentInfo.getListenerPort(), reciever.getListenerPort(), (Set<String>) null, requester);
 		}
 		else{
-			m = new FileListResultMessage(AppConfig.myServentInfo.getListenerPort(), reciever.getListenerPort(), uploadedFiles, requester);
+
+			m = new FileListResultMessage(AppConfig.myServentInfo.getListenerPort(), reciever.getListenerPort(), uploadedFiles.get(key), requester);
 		}
 		MessageUtil.sendMessage(m);
 	}
@@ -372,12 +380,9 @@ public class ChordState {
 	}
 
 	public Set<String> getUploadedFiles() {
-		return uploadedFiles;
+		return uploadedFiles.get(AppConfig.myServentInfo.getListenerPort());
 	}
 
-	public void setUploadedFiles(Set<String> uploadedFiles) {
-		this.uploadedFiles = uploadedFiles;
-	}
 
 	public boolean isPublicProfile() {
 		return publicProfile;

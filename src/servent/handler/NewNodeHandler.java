@@ -1,8 +1,10 @@
 package servent.handler;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import app.AppConfig;
 import app.ServentInfo;
@@ -50,47 +52,48 @@ public class NewNodeHandler implements MessageHandler {
 				
 				AppConfig.chordState.setPredecessor(newNodeInfo);
 				
-				Map<Integer, Integer> myValues = AppConfig.chordState.getValueMap();
-				Map<Integer, Integer> hisValues = new HashMap<>();
+				Map<Integer, Set<String>> myValues = AppConfig.chordState.getValueMap();
+				Map<Integer, Set<String>> hisValues = new HashMap<>();
 				
 				int myId = AppConfig.myServentInfo.getChordId();
 				int hisPredId = hisPred.getChordId();
 				int newNodeId = newNodeInfo.getChordId();
 				
-				for (Entry<Integer, Integer> valueEntry : myValues.entrySet()) {
+				for (Entry<Integer, Set<String>> valueEntry : myValues.entrySet()) {
 					if (hisPredId == myId) { //i am first and he is second
 						if (myId < newNodeId) {
 							if (valueEntry.getKey() <= newNodeId && valueEntry.getKey() > myId) {
-								hisValues.put(valueEntry.getKey(), valueEntry.getValue());
+								hisValues.put(valueEntry.getKey(), Collections.synchronizedSet(valueEntry.getValue()));
 							}
 						} else {
 							if (valueEntry.getKey() <= newNodeId || valueEntry.getKey() > myId) {
-								hisValues.put(valueEntry.getKey(), valueEntry.getValue());
+								hisValues.put(valueEntry.getKey(), Collections.synchronizedSet(valueEntry.getValue()));
 							}
 						}
 					}
 					if (hisPredId < myId) { //my old predecesor was before me
 						if (valueEntry.getKey() <= newNodeId) {
-							hisValues.put(valueEntry.getKey(), valueEntry.getValue());
+							hisValues.put(valueEntry.getKey(), Collections.synchronizedSet(valueEntry.getValue()));
 						}
 					} else { //my old predecesor was after me
 						if (hisPredId > newNodeId) { //new node overflow
 							if (valueEntry.getKey() <= newNodeId || valueEntry.getKey() > hisPredId) {
-								hisValues.put(valueEntry.getKey(), valueEntry.getValue());
+								hisValues.put(valueEntry.getKey(), Collections.synchronizedSet(valueEntry.getValue()));
 							}
 						} else { //no new node overflow
 							if (valueEntry.getKey() <= newNodeId && valueEntry.getKey() > hisPredId) {
-								hisValues.put(valueEntry.getKey(), valueEntry.getValue());
+								hisValues.put(valueEntry.getKey(), Collections.synchronizedSet(valueEntry.getValue()));
 							}
 						}
 						
 					}
 					
 				}
-				for (Integer key : hisValues.keySet()) { //remove his values from my map
+				//don't erase my copy of his elements, they are needed for backup
+				/*for (Integer key : hisValues.keySet()) { //remove his values from my map
 					myValues.remove(key);
 				}
-				AppConfig.chordState.setValueMap(myValues);
+				AppConfig.chordState.setValueMap(myValues);*/
 				
 				WelcomeMessage wm = new WelcomeMessage(AppConfig.myServentInfo.getListenerPort(), newNodePort, hisValues);
 				MessageUtil.sendMessage(wm);

@@ -20,7 +20,7 @@ public class AskGetHandler implements MessageHandler {
 	
 	@Override
 	public void run() {
-		if (clientMessage.getMessageType() == MessageType.ASK_GET) {
+		/*if (clientMessage.getMessageType() == MessageType.ASK_GET) {
 			try {
 				int key = Integer.parseInt(clientMessage.getMessageText());
 				if (AppConfig.chordState.isKeyMine(key)) {
@@ -45,7 +45,7 @@ public class AskGetHandler implements MessageHandler {
 			
 		} else {
 			AppConfig.timestampedErrorPrint("Ask get handler got a message that is not ASK_GET");
-		}
+		}*/
 
 	}
 

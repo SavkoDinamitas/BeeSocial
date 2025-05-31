@@ -17,9 +17,9 @@ public class ListFilesMessageHandler implements MessageHandler {
 
     @Override
     public void run() {
-        //if I am the one that is getting requested
-        if(listFilesMessage.getRequiredUser() == AppConfig.myServentInfo.getListenerPort()){
-            AppConfig.chordState.solveFileRequest(listFilesMessage.getSenderPort());
+        //if I have the one that is getting requested
+        if(AppConfig.chordState.isKeyMine(ChordState.chordHash(listFilesMessage.getRequiredUser()))){
+            AppConfig.chordState.solveFileRequest(listFilesMessage.getRequiredUser(), listFilesMessage.getSenderPort());
         }
         else{
             ServentInfo reciever = AppConfig.chordState.getNextNodeForKey(ChordState.chordHash(listFilesMessage.getRequiredUser()));

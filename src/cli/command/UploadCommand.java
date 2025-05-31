@@ -13,7 +13,7 @@ public class UploadCommand implements CLICommand {
 	@Override
 	public void execute(String args) {
 		//just add file to the collection
-		AppConfig.chordState.putValue(args);
+		AppConfig.chordState.putValue(AppConfig.myServentInfo.getListenerPort(), args);
 		AppConfig.timestampedStandardPrint("File " + args + " has been uploaded");
 	}
 
