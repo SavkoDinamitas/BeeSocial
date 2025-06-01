@@ -5,6 +5,7 @@ import java.util.List;
 
 import app.AppConfig;
 import app.ServentInfo;
+import servent.SuccessorAlive;
 import servent.message.FinishedReorganizationMessage;
 import servent.message.Message;
 import servent.message.MessageType;
@@ -52,6 +53,9 @@ public class UpdateHandler implements MessageHandler {
 				AppConfig.suzukiKasamiMutex.nodeReentered(clientMessage.getSenderPort());
 				Message m = new FinishedReorganizationMessage(AppConfig.myServentInfo.getListenerPort(), AppConfig.chordState.getNextNodePort());
 				MessageUtil.sendMessage(m);
+				//make thread to check if my successor is alive
+				Thread t = new Thread(new SuccessorAlive());
+				t.start();
 			}
 		} else {
 			AppConfig.timestampedErrorPrint("Update message handler got message that is not UPDATE");

@@ -3,9 +3,11 @@ package servent.message.util;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.Socket;
+import java.util.List;
 
 import app.AppConfig;
 import servent.message.Message;
+import servent.message.MessageType;
 
 /**
  * For now, just the read and send implementation, based on Java serializing.
@@ -44,7 +46,7 @@ public class MessageUtil {
 			e.printStackTrace();
 		}
 		
-		if (MESSAGE_UTIL_PRINTING) {
+		if (MESSAGE_UTIL_PRINTING && !List.of(MessageType.PING, MessageType.PONG, MessageType.PING_CHECK).contains(clientMessage.getMessageType())) {
 			AppConfig.timestampedStandardPrint("Got message " + clientMessage);
 		}
 				

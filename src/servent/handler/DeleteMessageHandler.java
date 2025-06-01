@@ -20,7 +20,7 @@ public class DeleteMessageHandler implements MessageHandler{
             MessageUtil.sendMessage(m);
         }
         else{
-            //AppConfig.suzukiKasamiMutex.unlock();
+            //AppConfig.chordState.setGotDeleteBack(message.getDeleteNode().getListenerPort());
         }
     }
 }

@@ -91,9 +91,21 @@ public class SuzukiKasamiMutex {
         return ln;
     }
 
+    public Map<Integer, Integer> getRn() {
+        return rn;
+    }
+
     public void nodeReentered(Integer port){
         //reset maps after rejoining
         rn.remove(port);
         ln.remove(port);
+    }
+
+    public void setHavePrivilege(boolean havePrivilege) {
+        this.havePrivilege = havePrivilege;
+    }
+
+    public void setLn(Map<Integer, Integer> ln) {
+        this.ln = ln;
     }
 }

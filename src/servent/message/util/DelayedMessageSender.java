@@ -3,9 +3,11 @@ package servent.message.util;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.util.List;
 
 import app.AppConfig;
 import servent.message.Message;
+import servent.message.MessageType;
 
 /**
  * This worker sends a message asynchronously. Doing this in a separate thread
@@ -33,7 +35,7 @@ public class DelayedMessageSender implements Runnable {
 			e1.printStackTrace();
 		}
 		
-		if (MessageUtil.MESSAGE_UTIL_PRINTING) {
+		if (MessageUtil.MESSAGE_UTIL_PRINTING && !List.of(MessageType.PING, MessageType.PONG, MessageType.PING_CHECK).contains(messageToSend.getMessageType())) {
 			AppConfig.timestampedStandardPrint("Sending message " + messageToSend);
 		}
 		

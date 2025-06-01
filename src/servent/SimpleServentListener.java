@@ -104,6 +104,21 @@ public class SimpleServentListener implements Runnable, Cancellable {
 					case DELETE:
 						messageHandler = new DeleteMessageHandler(clientMessage);
 						break;
+					case PING:
+						messageHandler = new PingHandler(clientMessage);
+						break;
+					case PONG:
+						messageHandler = new PongHandler(clientMessage);
+						break;
+					case PING_CHECK:
+						messageHandler = new RequestPingHandler(clientMessage);
+						break;
+					case GATHER:
+						messageHandler = new TokenArrayGathererHandler(clientMessage);
+						break;
+					case FAIL:
+						messageHandler = new FailedMessageHandler(clientMessage);
+						break;
 					case POISON:
 						break;
 					}

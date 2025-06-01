@@ -42,7 +42,7 @@ public class ChordState {
 	
 	private int chordLevel; //log_2(CHORD_SIZE)
 	
-	private ServentInfo[] successorTable;
+	private volatile ServentInfo[] successorTable;
 	private ServentInfo predecessorInfo;
 	
 	//we DO NOT use this to send messages, but only to construct the successor table
@@ -56,6 +56,9 @@ public class ChordState {
 	private Map<Integer, Boolean> publicProfile = new ConcurrentHashMap<>();
 	private int changeId = 0;
 	private Map<Integer, Integer> nodeReplicasChanges = new ConcurrentHashMap<>();
+	private volatile boolean successorAlive = true;
+	private Map<Integer, Boolean> requestedPings = new ConcurrentHashMap<>();
+	private Map<Integer, Boolean> gotDeleteBack = new ConcurrentHashMap<>();
 
 	public ChordState() {
 		this.chordLevel = 1;
@@ -313,10 +316,16 @@ public class ChordState {
 	}
 
 	public void deleteNode(ServentInfo deleteNode){
+		//already got message for this removal
+		if(!allNodeInfo.contains(deleteNode))
+			return;
 		if(predecessorInfo.getChordId() == deleteNode.getChordId()){
 			for(int i = 0; i < allNodeInfo.size(); i++){
 				if(allNodeInfo.get(i).getChordId() == deleteNode.getChordId()){
-					predecessorInfo = allNodeInfo.get(i-1);
+					if(i != 0)
+						predecessorInfo = allNodeInfo.get(i-1);
+					else
+						predecessorInfo = allNodeInfo.getLast();
 					break;
 				}
 			}
@@ -462,5 +471,29 @@ public class ChordState {
 
 	public Map<Integer, Set<Integer>> getAllPendingRequests(){
 		return pendingRequests;
+	}
+
+	public boolean isSuccessorAlive() {
+		return successorAlive;
+	}
+
+	public void setSuccessorAlive(boolean successorAlive) {
+		this.successorAlive = successorAlive;
+	}
+
+	public List<ServentInfo> getAllNodeInfo() {
+		return allNodeInfo;
+	}
+
+	public Map<Integer, Boolean> getRequestedPings() {
+		return requestedPings;
+	}
+
+	public boolean isGotDeleteBack(Integer key) {
+		return gotDeleteBack.getOrDefault(key, false);
+	}
+
+	public void setGotDeleteBack(Integer key) {
+		this.gotDeleteBack.put(key, true);
 	}
 }

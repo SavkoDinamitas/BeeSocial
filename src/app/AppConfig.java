@@ -51,6 +51,8 @@ public class AppConfig {
 	public static ChordState chordState;
 
 	public static SuzukiKasamiMutex suzukiKasamiMutex;
+	public static int heartbeatTimeoutLower;
+	public static int heartbeatTimeoutHigher;
 	
 	/**
 	 * Reads a config file. Should be called once at start of app.
@@ -85,6 +87,20 @@ public class AppConfig {
 		
 		try {
 			BOOTSTRAP_PORT = Integer.parseInt(properties.getProperty("bs.port"));
+		} catch (NumberFormatException e) {
+			timestampedErrorPrint("Problem reading bootstrap_port. Exiting...");
+			System.exit(0);
+		}
+
+		try {
+			heartbeatTimeoutLower = Integer.parseInt(properties.getProperty("low"));
+		} catch (NumberFormatException e) {
+			timestampedErrorPrint("Problem reading bootstrap_port. Exiting...");
+			System.exit(0);
+		}
+
+		try {
+			heartbeatTimeoutHigher = Integer.parseInt(properties.getProperty("high"));
 		} catch (NumberFormatException e) {
 			timestampedErrorPrint("Problem reading bootstrap_port. Exiting...");
 			System.exit(0);
