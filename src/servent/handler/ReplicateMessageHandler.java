@@ -15,11 +15,11 @@ public class ReplicateMessageHandler implements MessageHandler{
     @Override
     public void run() {
         //update node files in my node
-        AppConfig.chordState.updateReplicaForNode(replicateMessage.getSenderPort(), replicateMessage.getUploadedFiles(), replicateMessage.getReplicaId());
+        AppConfig.chordState.updateReplicaForNode(replicateMessage.getSenderPort(), replicateMessage.getUploadedFiles(), replicateMessage.getPendingRequests(), replicateMessage.getFollowers(), replicateMessage.getReplicaId());
         //if this is first replica, forward it to the next node
         if(!replicateMessage.isForwarded()){
             Message m = new ReplicateMessage(replicateMessage.getSenderPort(), AppConfig.chordState.getNextNodePort(), replicateMessage.getUploadedFiles(),
-                    true, replicateMessage.getReplicaId());
+                    replicateMessage.getPendingRequests(), replicateMessage.getFollowers(),true, replicateMessage.getReplicaId());
             MessageUtil.sendMessage(m);
         }
     }

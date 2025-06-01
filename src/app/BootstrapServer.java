@@ -98,6 +98,10 @@ public class BootstrapServer {
 					
 					activeServents.add(newServentPort);
 					newServentSocket.close();
+				} else if (message.equals("Delete")){
+					int deletedServentPort = socketScanner.nextInt();
+					System.out.println("deleting " + deletedServentPort);
+					activeServents.remove(Integer.valueOf(deletedServentPort));
 				}
 				
 			} catch (SocketTimeoutException e) {

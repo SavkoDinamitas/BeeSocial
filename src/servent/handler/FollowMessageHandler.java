@@ -5,6 +5,7 @@ import app.ChordState;
 import app.ServentInfo;
 import servent.message.FollowMessage;
 import servent.message.Message;
+import servent.message.ReplicateMessage;
 import servent.message.util.MessageUtil;
 
 public class FollowMessageHandler implements MessageHandler{
@@ -17,9 +18,14 @@ public class FollowMessageHandler implements MessageHandler{
     @Override
     public void run() {
         //if I am the one that is getting requested
-        if(followMessage.getFollowPort() == AppConfig.myServentInfo.getListenerPort()){
-            AppConfig.chordState.getFollowRequest(followMessage.getSenderPort());
+        if(AppConfig.chordState.isKeyMine(ChordState.chordHash(followMessage.getFollowPort()))){
+            AppConfig.chordState.getFollowRequest(followMessage.getSenderPort(), followMessage.getFollowPort());
             AppConfig.timestampedStandardPrint("Got follow request from " + followMessage.getFollowPort());
+            //replicate followers
+            Message m = new ReplicateMessage(AppConfig.myServentInfo.getListenerPort(), AppConfig.chordState.getNextNodePort(), AppConfig.chordState.getUploadedFiles(),
+                    AppConfig.chordState.getPendingRequests(), AppConfig.chordState.getFollowers(), false, AppConfig.chordState.getChangeId());
+            AppConfig.chordState.incrementChangeId();
+            MessageUtil.sendMessage(m);
         }
         else{
             //after homework 2, i don't believe in changeReciever methods...

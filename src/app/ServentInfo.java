@@ -37,4 +37,13 @@ public class ServentInfo implements Serializable {
 		return "[" + chordId + "|" + ipAddress + "|" + listenerPort + "]";
 	}
 
+	@Override
+	public boolean equals(Object obj) {
+		if(obj instanceof ServentInfo){
+			ServentInfo xd = (ServentInfo) obj;
+			return xd.getListenerPort() == listenerPort && xd.getChordId() == chordId;
+		}
+		else
+			return false;
+	}
 }

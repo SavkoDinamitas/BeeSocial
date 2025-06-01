@@ -98,6 +98,12 @@ public class SimpleServentListener implements Runnable, Cancellable {
 					case REPLICATE:
 						messageHandler = new ReplicateMessageHandler(clientMessage);
 						break;
+					case STOP:
+						messageHandler = new StopMessageHandler(clientMessage);
+						break;
+					case DELETE:
+						messageHandler = new DeleteMessageHandler(clientMessage);
+						break;
 					case POISON:
 						break;
 					}

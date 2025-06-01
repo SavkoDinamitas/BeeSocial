@@ -1,6 +1,9 @@
 package cli.command;
 
 import app.AppConfig;
+import servent.message.Message;
+import servent.message.ReplicateMessage;
+import servent.message.util.MessageUtil;
 
 public class AcceptCommand implements CLICommand{
     @Override
@@ -15,8 +18,13 @@ public class AcceptCommand implements CLICommand{
         }
         else{
             AppConfig.chordState.getPendingRequests().remove(Integer.parseInt(args));
-            AppConfig.chordState.getFollowers().add(Integer.parseInt(args));
+            AppConfig.chordState.acceptFollower(Integer.parseInt(args));
             AppConfig.timestampedStandardPrint("Follower " + args + " was successfully accepted!");
+            //replicate followers
+            Message m = new ReplicateMessage(AppConfig.myServentInfo.getListenerPort(), AppConfig.chordState.getNextNodePort(), AppConfig.chordState.getUploadedFiles(),
+                    AppConfig.chordState.getPendingRequests(), AppConfig.chordState.getFollowers(), false, AppConfig.chordState.getChangeId());
+            AppConfig.chordState.incrementChangeId();
+            MessageUtil.sendMessage(m);
         }
     }
 }

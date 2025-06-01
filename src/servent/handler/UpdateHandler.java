@@ -35,6 +35,7 @@ public class UpdateHandler implements MessageHandler {
 					newMessageText = clientMessage.getMessageText() + "," + AppConfig.myServentInfo.getListenerPort();
 				}
 				AppConfig.chordState.resetChanges(newNodInfo.getListenerPort());
+				AppConfig.suzukiKasamiMutex.nodeReentered(newNodInfo.getListenerPort());
 				Message nextUpdate = new UpdateMessage(clientMessage.getSenderPort(), AppConfig.chordState.getNextNodePort(),
 						newMessageText);
 				MessageUtil.sendMessage(nextUpdate);
@@ -48,6 +49,7 @@ public class UpdateHandler implements MessageHandler {
 				}
 				AppConfig.chordState.addNodes(allNodes);
 				AppConfig.chordState.resetChanges(clientMessage.getSenderPort());
+				AppConfig.suzukiKasamiMutex.nodeReentered(clientMessage.getSenderPort());
 				Message m = new FinishedReorganizationMessage(AppConfig.myServentInfo.getListenerPort(), AppConfig.chordState.getNextNodePort());
 				MessageUtil.sendMessage(m);
 			}

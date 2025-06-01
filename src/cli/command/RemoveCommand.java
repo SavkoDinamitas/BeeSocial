@@ -19,7 +19,7 @@ public class RemoveCommand implements CLICommand{
         else{
             AppConfig.chordState.getUploadedFiles().remove(args);
             Message m = new ReplicateMessage(AppConfig.myServentInfo.getListenerPort(), AppConfig.chordState.getNextNodePort(), AppConfig.chordState.getUploadedFiles(),
-                    false, AppConfig.chordState.getChangeId());
+                    AppConfig.chordState.getPendingRequests(), AppConfig.chordState.getFollowers(), false, AppConfig.chordState.getChangeId());
             AppConfig.chordState.incrementChangeId();
             MessageUtil.sendMessage(m);
         }

@@ -51,9 +51,9 @@ public class ChordState {
 	private Map<Integer, Integer> valueMap;
 	//map of uploaded files, including the backups
 	private Map<Integer, Set<String>> uploadedFiles = new ConcurrentHashMap<>();
-	private Set<Integer> pendingRequests = Collections.synchronizedSet(new HashSet<>());
-	private Set<Integer> followers = Collections.synchronizedSet(new HashSet<>());
-	private volatile boolean publicProfile = false;
+	private Map<Integer, Set<Integer>> pendingRequests = new ConcurrentHashMap<>();
+	private Map<Integer, Set<Integer>> followers = new ConcurrentHashMap<>();
+	private Map<Integer, Boolean> publicProfile = new ConcurrentHashMap<>();
 	private int changeId = 0;
 	private Map<Integer, Integer> nodeReplicasChanges = new ConcurrentHashMap<>();
 
@@ -87,7 +87,9 @@ public class ChordState {
 		//set a temporary pointer to next node, for sending of update message
 		successorTable[0] = new ServentInfo("localhost", welcomeMsg.getSenderPort());
 		this.uploadedFiles = welcomeMsg.getValues();
-		
+		this.followers = welcomeMsg.getFollowers();
+		this.pendingRequests = welcomeMsg.getRequests();
+
 		//tell bootstrap this node is not a collider
 		try {
 			Socket bsSocket = new Socket("localhost", AppConfig.BOOTSTRAP_PORT);
@@ -310,8 +312,27 @@ public class ChordState {
 		updateSuccessorTable();
 	}
 
+	public void deleteNode(ServentInfo deleteNode){
+		if(predecessorInfo.getChordId() == deleteNode.getChordId()){
+			for(int i = 0; i < allNodeInfo.size(); i++){
+				if(allNodeInfo.get(i).getChordId() == deleteNode.getChordId()){
+					predecessorInfo = allNodeInfo.get(i-1);
+					break;
+				}
+			}
+		}
+		allNodeInfo.remove(deleteNode);
+		updateSuccessorTable();
+	}
+
 	private Set<String> makeSetWithInitialValue(String value){
 		Set<String> set = ConcurrentHashMap.newKeySet();
+		set.add(value);
+		return set;
+	}
+
+	private Set<Integer> makeSetWithInitialValue(Integer value){
+		Set<Integer> set = ConcurrentHashMap.newKeySet();
 		set.add(value);
 		return set;
 	}
@@ -348,36 +369,46 @@ public class ChordState {
 	}
 
 	public void solveFileRequest(int key, int requester){
+		int me = AppConfig.myServentInfo.getListenerPort();
 		Message m = null;
 		ServentInfo reciever = getNextNodeForKey(chordHash(requester));
-		if(!publicProfile && !followers.contains(requester)) {
-			m = new FileListResultMessage(AppConfig.myServentInfo.getListenerPort(), reciever.getListenerPort(), (Set<String>) null, requester);
+		if(!publicProfile.getOrDefault(key, false) && (followers.get(key) == null || !followers.get(key).contains(requester))) {
+			m = new FileListResultMessage(key, reciever.getListenerPort(), (Set<String>) null, requester);
 		}
 		else{
-
-			m = new FileListResultMessage(AppConfig.myServentInfo.getListenerPort(), reciever.getListenerPort(), uploadedFiles.get(key), requester);
+			m = new FileListResultMessage(key, reciever.getListenerPort(), uploadedFiles.get(key), requester);
 		}
 		MessageUtil.sendMessage(m);
 	}
 
 	//add follow request to collection
-	public void getFollowRequest(int requester){
-		pendingRequests.add(requester);
+	public void getFollowRequest(int requester, int requested){
+		//int me = AppConfig.myServentInfo.getListenerPort();
+		pendingRequests.merge(requested, makeSetWithInitialValue(requester), (set, x) -> {set.add(requester); return set;});
+		//pendingRequests.get(AppConfig.myServentInfo.getListenerPort()).add(requester);
+	}
+
+	public void acceptFollower(int requester){
+		int me = AppConfig.myServentInfo.getListenerPort();
+		followers.merge(me, makeSetWithInitialValue(requester), (set, x) -> {set.add(requester); return set;});
 	}
 
 	public Set<Integer> getFollowers() {
-		return followers;
+		if(followers == null){
+
+		}
+		return followers.get(AppConfig.myServentInfo.getListenerPort());
 	}
 
-	public void setFollowers(Set<Integer> followers) {
+	public void setFollowers(Map<Integer, Set<Integer>> followers) {
 		this.followers = followers;
 	}
 
 	public Set<Integer> getPendingRequests() {
-		return pendingRequests;
+		return pendingRequests.get(AppConfig.myServentInfo.getListenerPort());
 	}
 
-	public void setPendingRequests(Set<Integer> pendingRequests) {
+	public void setPendingRequests(Map<Integer, Set<Integer>> pendingRequests) {
 		this.pendingRequests = pendingRequests;
 	}
 
@@ -387,11 +418,11 @@ public class ChordState {
 
 
 	public boolean isPublicProfile() {
-		return publicProfile;
+		return publicProfile.get(AppConfig.myServentInfo.getListenerPort());
 	}
 
 	public void setPublicProfile(boolean publicProfile) {
-		this.publicProfile = publicProfile;
+		this.publicProfile.put(AppConfig.myServentInfo.getListenerPort(), publicProfile);
 	}
 
 	public int getChangeId() {
@@ -406,14 +437,30 @@ public class ChordState {
 		nodeReplicasChanges.put(key, 0);
 	}
 
-	public void updateReplicaForNode(Integer key, Set<String> files, Integer changeId){
+	public void updateReplicaForNode(Integer key, Set<String> files, Set<Integer> requests, Set<Integer> followers, Integer changeId){
 		if(changeId > nodeReplicasChanges.getOrDefault(key, 0)){
 			uploadedFiles.put(key, files);
+			if(requests == null){
+				requests = Collections.synchronizedSet(new HashSet<>());
+			}
+			if(followers == null){
+				followers = Collections.synchronizedSet(new HashSet<>());
+			}
+			pendingRequests.put(key, requests);
+			this.followers.put(key, followers);
 			nodeReplicasChanges.put(key, changeId);
 		}
 	}
 
 	public Map<Integer, Set<String>> getAllFilesStored(){
 		return uploadedFiles;
+	}
+
+	public Map<Integer, Set<Integer>> getAllFollowers(){
+		return followers;
+	}
+
+	public Map<Integer, Set<Integer>> getAllPendingRequests(){
+		return pendingRequests;
 	}
 }

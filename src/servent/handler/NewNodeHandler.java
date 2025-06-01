@@ -2,8 +2,10 @@ package servent.handler;
 
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 
 import app.AppConfig;
+import app.ChordState;
 import app.ServentInfo;
 import servent.message.Message;
 import servent.message.MessageType;
@@ -36,6 +38,7 @@ public class NewNodeHandler implements MessageHandler {
 			if (AppConfig.chordState.isCollision(newNodeInfo.getChordId())) {
 				Message sry = new SorryMessage(AppConfig.myServentInfo.getListenerPort(), clientMessage.getSenderPort());
 				MessageUtil.sendMessage(sry);
+				AppConfig.suzukiKasamiMutex.unlock();
 				return;
 			}
 			
@@ -50,36 +53,51 @@ public class NewNodeHandler implements MessageHandler {
 				AppConfig.chordState.setPredecessor(newNodeInfo);
 				
 				Map<Integer, Set<String>> myValues = AppConfig.chordState.getValueMap();
-				Map<Integer, Set<String>> hisValues = new HashMap<>();
+				Map<Integer, Set<Integer>> myFollowers = AppConfig.chordState.getAllFollowers();
+				Map<Integer, Set<Integer>> myPendingRequests = AppConfig.chordState.getAllPendingRequests();
+				Map<Integer, Set<String>> hisValues = new ConcurrentHashMap<>();
+				Map<Integer, Set<Integer>> hisFollowers = new ConcurrentHashMap<>();
+				Map<Integer, Set<Integer>> hisPendingRequests = new ConcurrentHashMap<>();
 				
 				int myId = AppConfig.myServentInfo.getChordId();
 				int hisPredId = hisPred.getChordId();
 				int newNodeId = newNodeInfo.getChordId();
 				
 				for (Entry<Integer, Set<String>> valueEntry : myValues.entrySet()) {
+					int valueEntryKey = ChordState.chordHash(valueEntry.getKey());
 					if (hisPredId == myId) { //i am first and he is second
 						if (myId < newNodeId) {
-							if (valueEntry.getKey() <= newNodeId && valueEntry.getKey() > myId) {
+							if (valueEntryKey <= newNodeId && valueEntryKey > myId) {
 								hisValues.put(valueEntry.getKey(), Collections.synchronizedSet(new HashSet<>(valueEntry.getValue())));
+								hisFollowers.put(valueEntry.getKey(), myFollowers.get(valueEntry.getKey()));
+								hisPendingRequests.put(valueEntry.getKey(), myPendingRequests.get(valueEntry.getKey()));
 							}
 						} else {
-							if (valueEntry.getKey() <= newNodeId || valueEntry.getKey() > myId) {
+							if (valueEntryKey <= newNodeId || valueEntryKey > myId) {
 								hisValues.put(valueEntry.getKey(), Collections.synchronizedSet(new HashSet<>(valueEntry.getValue())));
+								hisFollowers.put(valueEntry.getKey(), myFollowers.get(valueEntry.getKey()));
+								hisPendingRequests.put(valueEntry.getKey(), myPendingRequests.get(valueEntry.getKey()));
 							}
 						}
 					}
 					if (hisPredId < myId) { //my old predecesor was before me
-						if (valueEntry.getKey() <= newNodeId) {
+						if (valueEntryKey <= newNodeId) {
 							hisValues.put(valueEntry.getKey(), Collections.synchronizedSet(new HashSet<>(valueEntry.getValue())));
+							hisFollowers.put(valueEntry.getKey(), myFollowers.get(valueEntry.getKey()));
+							hisPendingRequests.put(valueEntry.getKey(), myPendingRequests.get(valueEntry.getKey()));
 						}
 					} else { //my old predecessor was after me
 						if (hisPredId > newNodeId) { //new node overflow
-							if (valueEntry.getKey() <= newNodeId || valueEntry.getKey() > hisPredId) {
+							if (valueEntryKey <= newNodeId || valueEntryKey > hisPredId) {
 								hisValues.put(valueEntry.getKey(), Collections.synchronizedSet(new HashSet<>(valueEntry.getValue())));
+								hisFollowers.put(valueEntry.getKey(), myFollowers.get(valueEntry.getKey()));
+								hisPendingRequests.put(valueEntry.getKey(), myPendingRequests.get(valueEntry.getKey()));
 							}
 						} else { //no new node overflow
-							if (valueEntry.getKey() <= newNodeId && valueEntry.getKey() > hisPredId) {
+							if (valueEntryKey <= newNodeId && valueEntryKey > hisPredId) {
 								hisValues.put(valueEntry.getKey(), Collections.synchronizedSet(new HashSet<>(valueEntry.getValue())));
+								hisFollowers.put(valueEntry.getKey(), myFollowers.get(valueEntry.getKey()));
+								hisPendingRequests.put(valueEntry.getKey(), myPendingRequests.get(valueEntry.getKey()));
 							}
 						}
 						
@@ -92,7 +110,7 @@ public class NewNodeHandler implements MessageHandler {
 				}
 				AppConfig.chordState.setValueMap(myValues);*/
 				
-				WelcomeMessage wm = new WelcomeMessage(AppConfig.myServentInfo.getListenerPort(), newNodePort, hisValues);
+				WelcomeMessage wm = new WelcomeMessage(AppConfig.myServentInfo.getListenerPort(), newNodePort, hisValues, hisFollowers, hisPendingRequests);
 				MessageUtil.sendMessage(wm);
 			} else { //if he is not my predecessor, let someone else take care of it
 				ServentInfo nextNode = AppConfig.chordState.getNextNodeForKey(newNodeInfo.getChordId());

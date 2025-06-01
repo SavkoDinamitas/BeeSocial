@@ -19,7 +19,7 @@ public class UploadCommand implements CLICommand {
 		AppConfig.chordState.putValue(AppConfig.myServentInfo.getListenerPort(), args);
 		AppConfig.timestampedStandardPrint("File " + args + " has been uploaded");
 		Message m = new ReplicateMessage(AppConfig.myServentInfo.getListenerPort(), AppConfig.chordState.getNextNodePort(), AppConfig.chordState.getUploadedFiles(),
-				false, AppConfig.chordState.getChangeId());
+				AppConfig.chordState.getPendingRequests(), AppConfig.chordState.getFollowers(),false, AppConfig.chordState.getChangeId());
 		AppConfig.chordState.incrementChangeId();
 		MessageUtil.sendMessage(m);
 	}

@@ -79,4 +79,21 @@ public class SuzukiKasamiMutex {
         notifyAll();
     }
 
+    public boolean isHavePrivilege() {
+        return havePrivilege;
+    }
+
+    public Queue<Integer> getQueue() {
+        return queue;
+    }
+
+    public Map<Integer, Integer> getLn() {
+        return ln;
+    }
+
+    public void nodeReentered(Integer port){
+        //reset maps after rejoining
+        rn.remove(port);
+        ln.remove(port);
+    }
 }
